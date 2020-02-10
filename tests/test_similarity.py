@@ -22,24 +22,31 @@ except IOError:
     logger.error(message, IOError)
     sys.exit(0)
 
-path_similarity_nouns = [
+path_similarity_nouns_unnormalized = [
     ('s74611', 's39544', 0.74),
     ('s39183', 's39544', 0.86),
     ('s39183', 's39197', 0.97),
+    ('s46047', 's45380', 0.92
+     )
 
 ]
 
-wup_similarity_nouns = [
+wup_similarity_nouns_unnormalized = [
     ('s74611', 's39544', 0.0),
     ('s39183', 's39544', 0.62),
     ('s39183', 's39197', 0.92),
 ]
 
-lch_similarity_nouns = [
+lch_similarity_nouns_unnormalized = [
     ('s74611', 's39544', 1.41),
     ('s39183', 's39544', 1.92),
     ('s39183', 's39197', 3.02),
 ]
+
+lch_similarity_normalized_nouns = [
+    ('s46047', 's45380')
+]
+
 
 @pytest.mark.parametrize('id,other_id,similarity', path_similarity_nouns)
 def test_path_similarity(id, other_id, similarity):
@@ -48,12 +55,14 @@ def test_path_similarity(id, other_id, similarity):
     path_sim = np.round(sim.path(synset, other), decimals=2)
     np.testing.assert_almost_equal(path_sim, similarity)
 
+
 @pytest.mark.parametrize('id,other_id,similarity', wup_similarity_nouns)
 def test_wup_similarity(id, other_id, similarity):
     synset = germanet_data.get_synset_by_id(id)
     other = germanet_data.get_synset_by_id(other_id)
     wup_sim = np.round(sim.wup(synset, other), decimals=2)
     np.testing.assert_almost_equal(wup_sim, similarity)
+
 
 @pytest.mark.parametrize('id,other_id,similarity', lch_similarity_nouns)
 def test_lch_similarity(id, other_id, similarity):

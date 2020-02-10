@@ -2,7 +2,6 @@ from collections import defaultdict
 import math
 import fastenum
 
-
 class ConRel(fastenum.Enum):
     """
     This Enum class contains the conceptual relations (short: ConRel) that synsets can have to other synsets.
@@ -251,13 +250,15 @@ class Synset:
         shortest_paths = []
         lcs = self.lowest_common_subsumer(other)
         for subsumer in lcs:
-            path_to_lcs1 = self.shortest_path_to_hypernym(subsumer)
-            path_to_lcs2 = other.shortest_path_to_hypernym(subsumer)
-            path_to_lcs1.reverse()
-            for el in path_to_lcs2:
-                if el not in path_to_lcs1:
-                    path_to_lcs1.append(el)
-            shortest_paths.append(path_to_lcs1)
+            paths_to_lcs1 = self.shortest_path_to_hypernym(subsumer)
+            paths_to_lcs2 = other.shortest_path_to_hypernym(subsumer)
+            for path_to_lcs1 in paths_to_lcs1:
+                for path_to_lcs2 in paths_to_lcs2:
+                    current_path = path_to_lcs1
+                    path_to_lcs2 = path_to_lcs2[::-1]
+                    for el in path_to_lcs2[1:]:
+                        current_path.append(el)
+                    shortest_paths.append(current_path)
         return shortest_paths
 
     def shortest_path_to_hypernym(self, hypernym):
@@ -265,24 +266,25 @@ class Synset:
         The shortest path between this synset and the given hypernym. Asserts that the given other synset is a real
         hypernym of the current synset
         :param hypernym: a synset, denoting the hypernym the shortest path should be computed to
-        :return: [list(Synset)] a list with the shortest sequence of synset nodes traversed from self to given  hypernym
+        :return: [list(Synset)] a list of lists, storing the shortest sequence of synset nodes traversed from self to
+        given hypernym
         """
         if self == hypernym:
-            return [self]
+            return [[self]]
         assert hypernym in self.all_hypernyms(), "given hypernym is not a hypernym of this synset"
         shortest_path = []
         shortest = math.inf
         for path in self.hypernym_paths():
-            current_path = []
-            path_len = math.inf
-            # maybe optimize?
             if hypernym in path:
                 index = path.index(hypernym)
                 current_path = path[index:]
                 path_len = len(current_path)
-            if path_len <= shortest:
-                shortest = path_len
-                shortest_path = current_path
+                if path_len <= shortest:
+                    shortest = path_len
+                    current_path.reverse()
+                    shortest_path.append(current_path)
+        shortest_dist = min([len(p) for p in shortest_path])
+        shortest_path = [p for p in shortest_path if len(p) == shortest_dist]
         return shortest_path
 
     def lowest_common_subsumer(self, other):
@@ -373,3 +375,4 @@ class Synset:
     @property
     def direct_hyponyms(self):
         return self._direct_hyponyms
+
